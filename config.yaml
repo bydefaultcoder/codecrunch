@@ -1,0 +1,57 @@
+# AI Research Lab Simulator Configuration
+# This file allows easy model swapping without code changes
+
+llm:
+  provider: ${LLM_PROVIDER:-openai}  # openai, anthropic, local
+  model: ${LLM_MODEL:-gpt-4-turbo-preview}
+  temperature: ${LLM_TEMPERATURE:-0.7}
+  max_tokens: ${LLM_MAX_TOKENS:-2000}
+
+agents:
+  enabled:
+    - researcher
+    - reviewer
+    - editor
+    - fact_checker
+    # - bias_auditor
+    # - citation_validator
+    # - evaluator
+  
+  researcher:
+    max_sources: 10
+    retrieval_top_k: 5
+  
+  reviewer:
+    strictness: 0.8
+    check_methodology: true
+    check_coherence: true
+  
+  editor:
+    synthesis_mode: comprehensive
+    enforce_citations: true
+  
+  fact_checker:
+    cross_reference: true
+    verify_citations: true
+
+pipeline:
+  max_iterations: ${MAX_ITERATIONS:-5}
+  convergence_threshold: ${CONVERGENCE_THRESHOLD:-0.85}
+  enable_memory: true
+  enable_visualization: true
+
+memory:
+  type: conversation_buffer  # conversation_buffer, summary, entity
+  max_context_length: 10000
+  compression_enabled: true
+
+evaluation:
+  metrics:
+    - factual_accuracy
+    - logical_coherence
+    - linguistic_clarity
+  weights:
+    factual_accuracy: 0.4
+    logical_coherence: 0.3
+    linguistic_clarity: 0.3
+
