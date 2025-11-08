@@ -17,6 +17,7 @@ class LLMConfig(BaseSettings):
     provider: str = os.getenv("LLM_PROVIDER", "openai")
     model: str = os.getenv("LLM_MODEL", "gpt-4-turbo-preview")
     api_key: str = os.getenv("LLM_API_KEY", "")
+    anthropic_api_key: str = os.getenv("ANTHROPIC_API_KEY", "")
     temperature: float = float(os.getenv("LLM_TEMPERATURE", "0.7"))
     max_tokens: int = int(os.getenv("LLM_MAX_TOKENS", "2000"))
     
@@ -42,10 +43,18 @@ class Config:
     
     def get_llm_config(self) -> Dict[str, Any]:
         """Get LLM configuration."""
+        # Use appropriate API key based on provider
+        provider = self.llm_config.provider.lower()
+        if provider == "anthropic":
+            api_key = self.llm_config.anthropic_api_key or self.llm_config.api_key
+        else:
+            api_key = self.llm_config.api_key
+        
         return {
             "provider": self.llm_config.provider,
             "model": self.llm_config.model,
-            "api_key": self.llm_config.api_key,
+            "api_key": api_key,
+            "anthropic_api_key": self.llm_config.anthropic_api_key,
             "temperature": self.llm_config.temperature,
             "max_tokens": self.llm_config.max_tokens,
         }

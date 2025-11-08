@@ -44,11 +44,13 @@ def create_llm(
     elif provider == "anthropic":
         try:
             from langchain_anthropic import ChatAnthropic
+            # Use ANTHROPIC_API_KEY if available, otherwise fall back to LLM_API_KEY
+            api_key = llm_config.get("anthropic_api_key") or llm_config.get("api_key") or None
             return ChatAnthropic(
                 model=model,
                 temperature=temp,
                 max_tokens=tokens,
-                api_key=llm_config["api_key"] or None,
+                api_key=api_key,
             )
         except ImportError:
             raise ImportError("langchain-anthropic not installed. Install with: pip install langchain-anthropic")
