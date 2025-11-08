@@ -53,7 +53,7 @@ The system uses a configuration layer that allows easy model swapping:
 To swap models, simply update the `.env` file:
 ```env
 LLM_PROVIDER=openai
-LLM_MODEL=gpt-4-turbo-preview
+LLM_MODEL=gpt-4.1
 LLM_API_KEY=your-key-here
 ```
 
@@ -159,7 +159,7 @@ The pipeline uses LangGraph for state management, tracking:
 ```env
 # LLM Configuration
 LLM_PROVIDER=openai
-LLM_MODEL=gpt-4-turbo-preview
+LLM_MODEL=gpt-4.1
 LLM_API_KEY=your-api-key
 LLM_TEMPERATURE=0.7
 LLM_MAX_TOKENS=2000

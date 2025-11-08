@@ -8,13 +8,16 @@ from dotenv import load_dotenv
 load_dotenv()
 
 
+
+
 def test_openai_key():
     """Test OpenAI API key."""
-    print("=" * 60)
-    print("Testing OpenAI API Key (GPT-4-turbo-preview)")
+    print("\n" + "=" * 60)
+    model_name = os.getenv("LLM_MODEL", "gpt-4o-mini")
+    print(f"Testing OpenAI API Key ({model_name})")
     print("=" * 60)
     
-    api_key = os.getenv("LLM_API_KEY", "")
+    api_key = os.getenv("OPENAI_API_KEY", "") or os.getenv("LLM_API_KEY", "")
     
     if not api_key or api_key == "your-api-key-here":
         print("❌ OpenAI API key not set or using placeholder")
@@ -23,8 +26,10 @@ def test_openai_key():
     try:
         from langchain_openai import ChatOpenAI
         
+        model_name = os.getenv("LLM_MODEL", "gpt-4o-mini")
+        
         llm = ChatOpenAI(
-            model="gpt-4-turbo-preview",
+            model=model_name,
             api_key=api_key,
             temperature=0.7,
             max_tokens=100
@@ -35,44 +40,12 @@ def test_openai_key():
         print(f"   Response: {response.content[:100]}")
         return True
         
+    except ImportError:
+        print("❌ langchain-openai not installed")
+        print("   Install with: pip install langchain-openai")
+        return False
     except Exception as e:
         print(f"❌ OpenAI API key test failed: {e}")
-        return False
-
-
-def test_anthropic_key():
-    """Test Anthropic API key."""
-    print("\n" + "=" * 60)
-    print("Testing Anthropic API Key (Claude 3 Opus)")
-    print("=" * 60)
-    
-    api_key = os.getenv("ANTHROPIC_API_KEY", "")
-    
-    if not api_key or api_key == "your-api-key-here":
-        print("❌ Anthropic API key not set or using placeholder")
-        return False
-    
-    try:
-        from langchain_anthropic import ChatAnthropic
-        
-        llm = ChatAnthropic(
-            model="claude-3-opus-20240229",
-            api_key=api_key,
-            temperature=0.7,
-            max_tokens=100
-        )
-        
-        response = llm.invoke("Say 'API key works!' if you can read this.")
-        print(f"✅ Anthropic API key is valid!")
-        print(f"   Response: {response.content[:100]}")
-        return True
-        
-    except ImportError:
-        print("❌ langchain-anthropic not installed")
-        print("   Install with: pip install langchain-anthropic")
-        return False
-    except Exception as e:
-        print(f"❌ Anthropic API key test failed: {e}")
         return False
 
 
@@ -111,7 +84,6 @@ def test_configuration():
         
         llm_config = config.get_llm_config()
         print(f"✅ Configuration loaded successfully")
-        print(f"   Provider: {llm_config['provider']}")
         print(f"   Model: {llm_config['model']}")
         print(f"   Temperature: {llm_config['temperature']}")
         print(f"   Max Tokens: {llm_config['max_tokens']}")
@@ -136,7 +108,6 @@ def main():
     
     results = {
         "OpenAI": test_openai_key(),
-        "Anthropic": test_anthropic_key(),
         "LangSmith": test_langsmith_key(),
         "Configuration": test_configuration(),
     }
@@ -155,14 +126,15 @@ def main():
     
     print("\n" + "=" * 60)
     
-    # Check if at least one LLM provider works
-    if results["OpenAI"] or results["Anthropic"]:
-        print("✅ At least one LLM provider is configured correctly!")
+    # Check if LLM provider works
+    if results["OpenAI"]:
+        print("✅ LLM provider is configured correctly!")
         print("   You can now run the research pipeline.")
         print("\n   Try: python -m src.main 'Your Research Topic'")
     else:
-        print("❌ No LLM providers are configured correctly.")
-        print("   Please check your .env file and API keys.")
+        print("❌ LLM provider is not configured correctly.")
+        print("   Please check your .env file and API key.")
+        print("   Required: OPENAI_API_KEY or LLM_API_KEY")
     
     print("=" * 60)
 

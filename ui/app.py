@@ -110,8 +110,8 @@ def run_pipeline_ui():
     
     # Update config
     from src.config import config
-    config.pipeline_config["max_iterations"] = max_iterations
-    config.pipeline_config["convergence_threshold"] = convergence_threshold
+    config.update_pipeline_config("max_iterations", max_iterations)
+    config.update_pipeline_config("convergence_threshold", convergence_threshold)
     
     # Initialize pipeline
     if "pipeline" not in st.session_state:
@@ -128,13 +128,43 @@ def run_pipeline_ui():
         progress_placeholder.progress(0)
         status_placeholder.info(f"🔬 Researching: {topic}")
         
-        result = pipeline.run(
-            topic=topic,
-            user_requirements=requirements if requirements else None
-        )
-        
-        progress_placeholder.progress(1.0)
-        status_placeholder.success("✅ Research complete!")
+        try:
+            # Validate API key before running
+            from src.config import config as cfg
+            llm_config = cfg.get_llm_config()
+            if not llm_config.get("api_key"):
+                st.error("❌ **OpenAI API key is not configured**")
+                st.info("💡 Please set `OPENAI_API_KEY` in your `.env` file.\n\nRun `python test_api_keys.py` to verify your API key.")
+                return
+            
+            result = pipeline.run(
+                topic=topic,
+                user_requirements=requirements if requirements else None
+            )
+            
+            progress_placeholder.progress(1.0)
+            status_placeholder.success("✅ Research complete!")
+        except ConnectionError as e:
+            progress_placeholder.empty()
+            status_placeholder.error("❌ **Connection Error**")
+            st.error(str(e))
+            st.info("💡 **Troubleshooting tips:**\n"
+                   "1. Check your internet connection\n"
+                   "2. Verify your API key is correct\n"
+                   "3. Check if OpenAI API is accessible\n"
+                   "4. Review firewall/proxy settings")
+            return
+        except ValueError as e:
+            progress_placeholder.empty()
+            status_placeholder.error("❌ **Configuration Error**")
+            st.error(str(e))
+            return
+        except Exception as e:
+            progress_placeholder.empty()
+            status_placeholder.error("❌ **Error**")
+            st.error(f"An error occurred: {str(e)}")
+            st.info("💡 Run `python test_api_keys.py` to verify your API configuration.")
+            return
     
     # Display results
     st.header("📄 Research Document")

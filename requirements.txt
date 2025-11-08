@@ -1,17 +1,26 @@
+python-dotenv
+# Core LangChain packages - pinned to compatible versions
 langchain==0.3.0
 langchain-openai==0.2.0
-langchain-anthropic==0.2.0
+langchain-anthropic/claude-3-haiku==0.2.0
 langchain-community==0.3.0
 langgraph==0.2.20
 langsmith==0.1.137
+
+# Core dependencies
 pydantic>=2.7.4,<3.0.0
-python-dotenv==1.0.0
-fastapi==0.104.1
-uvicorn==0.24.0
-streamlit==1.28.0
-chromadb==0.4.18
-tiktoken==0.5.1
-networkx==3.2.1
-matplotlib==3.8.2
-plotly==5.18.0
 pydantic-settings>=2.1.0
+python-dotenv>=1.0.0
+tiktoken>=0.7,<1
+
+# Web framework
+fastapi>=0.104.1
+uvicorn>=0.24.0
+streamlit>=1.28.0
+
+# Data and visualization (optional)
+# chromadb>=0.4.18  # Only needed if using vector store
+# langchain-chroma>=0.1.0  # For vector store (optional)
+networkx>=3.2.1
+matplotlib>=3.8.2
+plotly>=5.18.0

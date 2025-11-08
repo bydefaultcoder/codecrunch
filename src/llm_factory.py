@@ -1,11 +1,9 @@
 """
 LLM Factory for creating language models based on configuration.
-Allows easy swapping of models without code changes.
+Uses OpenAI as the single LLM provider.
 """
 
-from typing import Any, Optional
-from langchain_openai import ChatOpenAI
-from langchain_community.llms import Ollama
+from typing import Optional
 from langchain_core.language_models import BaseChatModel
 from src.config import config
 
@@ -16,7 +14,7 @@ def create_llm(
     model_name: Optional[str] = None
 ) -> BaseChatModel:
     """
-    Create an LLM instance based on configuration.
+    Create an OpenAI LLM instance based on configuration.
     
     Args:
         temperature: Override temperature from config
@@ -24,47 +22,33 @@ def create_llm(
         model_name: Override model name from config
     
     Returns:
-        BaseChatModel instance
+        BaseChatModel instance (ChatOpenAI)
     """
+    try:
+        from langchain_openai import ChatOpenAI
+    except ImportError:
+        raise ImportError("langchain-openai not installed. Install with: pip install langchain-openai")
+    
     llm_config = config.get_llm_config()
-    provider = llm_config["provider"].lower()
     
     # Use overrides if provided, otherwise use config
     temp = temperature if temperature is not None else llm_config["temperature"]
     tokens = max_tokens if max_tokens is not None else llm_config["max_tokens"]
     model = model_name if model_name is not None else llm_config["model"]
+    api_key = llm_config["api_key"] or None
     
-    if provider == "openai":
-        return ChatOpenAI(
-            model=model,
-            temperature=temp,
-            max_tokens=tokens,
-            api_key=llm_config["api_key"] or None,
+    if not api_key:
+        raise ValueError(
+            "OpenAI API key is not set. Please set OPENAI_API_KEY or LLM_API_KEY in your .env file.\n"
+            "Run 'python test_api_keys.py' to verify your configuration."
         )
-    elif provider == "anthropic":
-        try:
-            from langchain_anthropic import ChatAnthropic
-            # Use ANTHROPIC_API_KEY if available, otherwise fall back to LLM_API_KEY
-            api_key = llm_config.get("anthropic_api_key") or llm_config.get("api_key") or None
-            return ChatAnthropic(
-                model=model,
-                temperature=temp,
-                max_tokens=tokens,
-                api_key=api_key,
-            )
-        except ImportError:
-            raise ImportError("langchain-anthropic not installed. Install with: pip install langchain-anthropic")
-    elif provider == "local" or provider == "ollama":
-        return Ollama(
-            model=model,
-            temperature=temp,
-        )
-    else:
-        raise ValueError(f"Unsupported LLM provider: {provider}")
     
     return ChatOpenAI(
         model=model,
         temperature=temp,
         max_tokens=tokens,
+        api_key=api_key,
+        timeout=60.0,  # 60 second timeout
+        max_retries=2,  # Retry up to 2 times
     )
 

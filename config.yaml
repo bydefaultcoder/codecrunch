@@ -2,8 +2,8 @@
 # This file allows easy model swapping without code changes
 
 llm:
-  provider: ${LLM_PROVIDER:-openai}  # openai, anthropic, local
-  model: ${LLM_MODEL:-gpt-4-turbo-preview}
+  provider: ${LLM_PROVIDER:-openai}  # openai, anthropic/claude-3-haiku, local
+  model: ${LLM_MODEL:-gpt-4.1}
   temperature: ${LLM_TEMPERATURE:-0.7}
   max_tokens: ${LLM_MAX_TOKENS:-2000}
 

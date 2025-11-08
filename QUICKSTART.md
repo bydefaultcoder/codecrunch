@@ -66,7 +66,7 @@ Edit `.env`:
 
 ```env
 LLM_PROVIDER=openai
-LLM_MODEL=gpt-4-turbo-preview
+LLM_MODEL=gpt-4.1
 # or
 LLM_MODEL=gpt-3.5-turbo
 ```

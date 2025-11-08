@@ -221,6 +221,17 @@ class ResearchPipeline:
         threshold = self.pipeline_config.get("convergence_threshold", 0.85)
         max_iter = self.pipeline_config.get("max_iterations", 5)
         
+        # Ensure threshold and max_iter are numeric
+        try:
+            threshold = float(threshold)
+        except (ValueError, TypeError):
+            threshold = 0.85
+        
+        try:
+            max_iter = int(max_iter)
+        except (ValueError, TypeError):
+            max_iter = 5
+        
         state["converged"] = (
             state["convergence_score"] >= threshold or
             state["iteration"] >= max_iter

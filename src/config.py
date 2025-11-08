@@ -1,6 +1,6 @@
 """
 Configuration management for the AI Research Lab Simulator.
-Allows easy model swapping without code changes.
+Uses OpenAI as the single LLM provider.
 """
 
 import os
@@ -14,15 +14,30 @@ load_dotenv()
 
 class LLMConfig(BaseSettings):
     """LLM configuration from environment variables."""
-    provider: str = os.getenv("LLM_PROVIDER", "openai")
-    model: str = os.getenv("LLM_MODEL", "gpt-4-turbo-preview")
-    api_key: str = os.getenv("LLM_API_KEY", "")
-    anthropic_api_key: str = os.getenv("ANTHROPIC_API_KEY", "")
-    temperature: float = float(os.getenv("LLM_TEMPERATURE", "0.7"))
-    max_tokens: int = int(os.getenv("LLM_MAX_TOKENS", "2000"))
+    api_key: str = ""
+    model: str = "gpt-4o-mini"  # Default model
+    temperature: float = 0.7
+    max_tokens: int = 2000
     
-    class Config:
-        env_file = ".env"
+    model_config = {
+        "env_file": ".env",
+        "env_file_encoding": "utf-8",
+        "extra": "ignore",  # Ignore extra env vars
+    }
+    
+    def __init__(self, **kwargs):
+        # Override with direct env vars
+        super().__init__(**kwargs)
+        # Get values from environment
+        if not self.api_key:
+            self.api_key = os.getenv("OPENAI_API_KEY", "") or os.getenv("LLM_API_KEY", "")
+        if not self.model or self.model == "gpt-4o-mini":
+            self.model = os.getenv("LLM_MODEL", "gpt-4o-mini")
+        try:
+            self.temperature = float(os.getenv("LLM_TEMPERATURE", str(self.temperature)))
+            self.max_tokens = int(os.getenv("LLM_MAX_TOKENS", str(self.max_tokens)))
+        except (ValueError, TypeError):
+            pass
 
 
 class Config:
@@ -32,6 +47,7 @@ class Config:
         self.config_path = config_path
         self.llm_config = LLMConfig()
         self._load_yaml_config()
+        self._pipeline_config_cache = None  # Cache for pipeline config
     
     def _load_yaml_config(self):
         """Load YAML configuration file."""
@@ -43,18 +59,9 @@ class Config:
     
     def get_llm_config(self) -> Dict[str, Any]:
         """Get LLM configuration."""
-        # Use appropriate API key based on provider
-        provider = self.llm_config.provider.lower()
-        if provider == "anthropic":
-            api_key = self.llm_config.anthropic_api_key or self.llm_config.api_key
-        else:
-            api_key = self.llm_config.api_key
-        
         return {
-            "provider": self.llm_config.provider,
+            "api_key": self.llm_config.api_key,
             "model": self.llm_config.model,
-            "api_key": api_key,
-            "anthropic_api_key": self.llm_config.anthropic_api_key,
             "temperature": self.llm_config.temperature,
             "max_tokens": self.llm_config.max_tokens,
         }
@@ -71,10 +78,47 @@ class Config:
     
     def get_pipeline_config(self) -> Dict[str, Any]:
         """Get pipeline configuration."""
-        return self.yaml_config.get("pipeline", {
+        if self._pipeline_config_cache is not None:
+            return self._pipeline_config_cache
+        
+        pipeline_config = self.yaml_config.get("pipeline", {})
+        
+        # Ensure numeric types from environment variables
+        default_config = {
             "max_iterations": 5,
             "convergence_threshold": 0.85,
-        })
+        }
+        
+        # Merge and convert types
+        result = default_config.copy()
+        result.update(pipeline_config)
+        
+        # Convert string values to proper types
+        if "convergence_threshold" in result:
+            try:
+                result["convergence_threshold"] = float(result["convergence_threshold"])
+            except (ValueError, TypeError):
+                result["convergence_threshold"] = 0.85
+        
+        if "max_iterations" in result:
+            try:
+                result["max_iterations"] = int(result["max_iterations"])
+            except (ValueError, TypeError):
+                result["max_iterations"] = 5
+        
+        self._pipeline_config_cache = result
+        return result
+    
+    @property
+    def pipeline_config(self) -> Dict[str, Any]:
+        """Property access to pipeline config for UI compatibility."""
+        return self.get_pipeline_config()
+    
+    def update_pipeline_config(self, key: str, value: Any):
+        """Update pipeline config value."""
+        config = self.get_pipeline_config()
+        config[key] = value
+        self._pipeline_config_cache = config
     
     def get_memory_config(self) -> Dict[str, Any]:
         """Get memory configuration."""
@@ -90,4 +134,3 @@ class Config:
 
 # Global config instance
 config = Config()
-
