@@ -25,11 +25,12 @@ The system performs multi-turn, reflexive collaboration (not linear chaining) wh
 ## 🚀 Quick Start
 
 ### Installation
-
 1. Clone the repository:
 ```bash
 git clone <repository-url>
 cd codecrunch
+py -3.12 -m venv myenv
+myenv/Script/activate
 ```
 
 2. Install dependencies:
